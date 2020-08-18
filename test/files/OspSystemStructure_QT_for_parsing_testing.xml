@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure version="0.1" xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>0.01</BaseStepSize>
+    <Simulators>
+        <Simulator name="chassis" source="chassis.fmu">
+            <InitialValues>
+                <InitialValue variable="C.mChassis">
+                    <Real value="400"/>
+                </InitialValue>
+                <InitialValue variable="C.kChassis">
+                    <Real value="15000"/>
+                </InitialValue>
+                <InitialValue variable="R.dChassis">
+                    <Real value="1000"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="wheel" source="wheel.fmu">
+            <InitialValues>
+                <InitialValue variable="C.mWheel">
+                    <Real value="40"/>
+                </InitialValue>
+                <InitialValue variable="C.kWheel">
+                    <Real value="150000"/>
+                </InitialValue>
+                <InitialValue variable="R.dWheel">
+                    <Real value="0"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="ground" source="ground.fmu"/>
+    </Simulators>
+    <Functions>
+        <LinearTransformation name="LTF" factor="2.0" offset="0.5" />
+        <Sum name="sumSpeed1" inputCount="2" />
+        <Sum name="sumSpeed2" inputCount="3" />
+    </Functions>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="chassis" name="p.e" />
+            <Variable simulator="wheel" name="p1.e" />
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="wheel" name="p1.f" />
+            <Variable simulator="chassis" name="p.f" />
+        </VariableConnection>
+        <SignalConnection>
+            <Variable simulator="wheel" name="p.f" />
+            <Signal function="Sum" name="sumSpeed"/>
+        </SignalConnection>
+        <VariableGroupConnection>
+            <VariableGroup simulator="wheel" name="shaft" />
+            <VariableGroup simulator="chassis" name="shaft" />
+        </VariableGroupConnection>
+        <SignalGroupConnection>
+            <SignalGroup function="LinearTransformation" name="LTF" />
+            <VariableGroup simulator="ground" name="contact" />
+        </SignalGroupConnection>
+    </Connections>
+</OspSystemStructure>

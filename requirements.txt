@@ -1,0 +1,5 @@
+xmlschema==1.2.2
+pytest==6.0.1
+sphinx
+sphinxcontrib-napoleon
+twine
