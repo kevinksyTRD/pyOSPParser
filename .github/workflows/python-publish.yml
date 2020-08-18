@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest, windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -22,10 +22,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.TESTPYPI-USER-NAME }}
-        TWINE_PASSWORD: ${{ secrets.TESTPYPI-PASSWORD }}
+    - name: Build
       run: |
         python setup.py sdist bdist_wheel
-        twine upload --repository testpypi dist/*
+    - name: Publish distribution 📦 to Test PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.TESTPYPI_PASSWORD }}
+        repository_url: https://test.pypi.org/legacy/
