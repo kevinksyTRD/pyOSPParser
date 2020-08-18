@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -31,5 +31,5 @@ jobs:
     - name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
-        password: ${{ secrets.TESTPYPI_PASSWORD }}
+        password: ${{ secrets.TESTPYPI-PASSWORD }}
         repository_url: https://test.pypi.org/legacy/
