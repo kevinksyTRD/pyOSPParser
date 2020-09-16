@@ -163,12 +163,14 @@ class OspInitialValue(OspSystemStructureAbstract):
 
     def __init__(self, dict_xml=None, **kwargs):
         """
-        Constructor for OspInitialValue. One should provide 'variable (str)' and
-        'value (float, int, str, bool)'. Otherwise, one can provide dictionary that
-        contains the information.
+        Constructor for OspInitialValue.
+
+        One should provide either 'dict_xml(dictionary)' that has a key of
+        'variable' and 'value) or 'variable (str)' and 'value (float, int, str, bool)' as
+        arguments.
 
         Args:
-            variable
+            variable 
             value
             dict_xml
         """

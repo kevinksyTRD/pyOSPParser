@@ -50,6 +50,11 @@ def create_a_random_pair_of_endpoints_for_sig_conn(
         functions: OspFunctions,
         group: bool
 ) -> EndpointPair:
+    """Returns a randomly created pair of endpoints for signal connection.
+
+    A signal connection has one end with a signal endpoint and the other with a variable endpoint.
+    In this function, it creates a signal enpoint point as a source or a target by 50% chance.
+    """
     if random.random() > 0.5:
         source_comp = random.choice(simulators)
         target_function = random.choice(functions.get_function_names())
