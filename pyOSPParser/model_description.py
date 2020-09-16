@@ -168,7 +168,8 @@ class Ospfmi2Unit(OspModelDescriptionAbstract):
     def to_dict(self):
         return {
             'BaseUnit': self.BaseUnit.to_dict(),
-            'DisplayUnit': None if self.DisplayUnit is None else [unit.to_dict() for unit in self.DisplayUnit],
+            'DisplayUnit': None if self.DisplayUnit is None
+            else [unit.to_dict() for unit in self.DisplayUnit],
             'name': self.name
         }
 
@@ -256,7 +257,9 @@ class OspPhysicalTypeBase(OspModelDescriptionAbstract):
 
     def from_dict_xml(self, dict_xml):
         self.name = dict_xml['@name']
-        self.Variable = [OspVariableType(dict_xml=variable) for variable in dict_xml.get('Variable', [])]
+        self.Variable = [
+            OspVariableType(dict_xml=variable) for variable in dict_xml.get('Variable', [])
+        ]
 
 
 class OspForceType(OspPhysicalTypeBase):
@@ -464,7 +467,9 @@ class OspAngularMechanicalQuasiPortType(OspModelDescriptionAbstract):
     def from_dict_xml(self, dict_xml: Dict):
         self.name = dict_xml['@name']
         self.Torque = OspTorqueType(dict_xml=dict_xml['Torque'])
-        self.AngularDisplacement = OspAngularDisplacementType(dict_xml=dict_xml['AngularDisplacement'])
+        self.AngularDisplacement = OspAngularDisplacementType(
+            dict_xml=dict_xml['AngularDisplacement']
+        )
 
     def to_dict_xml(self):
         return {
@@ -595,12 +600,14 @@ class OspGenericType(OspModelDescriptionAbstract):
             if type_name == 'Variable':
                 if type_name in dict_xml:
                     self.__setattr__(
-                        type_name, [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
+                        type_name,
+                        [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
                     )
             else:
                 if type_name in dict_xml:
                     self.__setattr__(
-                        type_name, [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
+                        type_name,
+                        [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
                     )
 
     def to_dict_xml(self):
@@ -619,7 +626,8 @@ class OspGenericType(OspModelDescriptionAbstract):
         for var_group in variable_group_types:
             if hasattr(self, var_group):
                 var_groups_obj = self.__getattribute__(var_group)
-                dict_obj[var_group] = None if var_groups_obj is None else [var.to_dict() for var in var_groups_obj]
+                dict_obj[var_group] = None if var_groups_obj is None \
+                    else [var.to_dict() for var in var_groups_obj]
         return dict_obj
 
 
@@ -637,8 +645,14 @@ variable_group_types = {
     'AngularDisplacement': {'class': OspAngularDisplacementType, 'field': ['Variable']},
     'Charge': {'class': OspChargeType, 'field': ['Variable']},
     'Volume': {'class': OspVolumeType, 'field': ['Variable']},
-    'LinearMechanicalPort': {'class': OspLinearMechanicalPortType, 'field': ['Force', 'LinearVelocity']},
-    'AngularMechanicalPort': {'class': OspAngularMechanicalPortType, 'field': ['Torque', 'AngularVelocity']},
+    'LinearMechanicalPort': {
+        'class': OspLinearMechanicalPortType,
+        'field': ['Force', 'LinearVelocity']
+    },
+    'AngularMechanicalPort': {
+        'class': OspAngularMechanicalPortType,
+        'field': ['Torque', 'AngularVelocity']
+    },
     'ElectromagneticPort': {'class': OspElectromagneticPortType, 'field': ['Voltage', 'Current']},
     'HydraulicPort': {'class': OspHydraulicPortType, 'field': ['Pressure', 'VolumeFlowRate']},
     'LinearMechanicalQuasiPort': {
@@ -647,17 +661,29 @@ variable_group_types = {
     'AngularMechanicalQuasiPort': {
         'class': OspAngularMechanicalQuasiPortType, 'field': ['Torque', 'AngularDisplacement']
     },
-    'ElectromagneticQuasiPort': {'class': OspElectromagneticQuasiPortType, 'field': ['Voltage', 'Charge']},
+    'ElectromagneticQuasiPort': {
+        'class': OspElectromagneticQuasiPortType,
+        'field': ['Voltage', 'Charge']
+    },
     'HydraulicQuasiPort': {'class': OspHydraulicQuasiPortType, 'field': ['Pressure', 'Volume']},
     'LinearMechanicalPowerPort': {'class': OspLinearMechanicalPowerPortType, 'field': ['Variable']},
-    'AngularMechanicalPowerPort': {'class': OspAngularMechanicalPowerPortType, 'field': ['Variable']},
+    'AngularMechanicalPowerPort': {
+        'class': OspAngularMechanicalPowerPortType,
+        'field': ['Variable']
+    },
     'ElectromagneticPowerPort': {'class': OspElectromagneticPowerPortType, 'field': ['Variable']},
     'HydraulicPowerPort': {'class': OspHydraulicPowerPortType, 'field': ['Variable']},
 }
 
 variable_group_types_with_variable_groups = {
-    'LinearMechanicalPort': {'class': OspLinearMechanicalPortType, 'field': ['Force', 'LinearVelocity']},
-    'AngularMechanicalPort': {'class': OspAngularMechanicalPortType, 'field': ['Torque', 'AngularVelocity']},
+    'LinearMechanicalPort': {
+        'class': OspLinearMechanicalPortType,
+        'field': ['Force', 'LinearVelocity']
+    },
+    'AngularMechanicalPort': {
+        'class': OspAngularMechanicalPortType,
+        'field': ['Torque', 'AngularVelocity']
+    },
     'ElectromagneticPort': {'class': OspElectromagneticPortType, 'field': ['Voltage', 'Current']},
     'HydraulicPort': {'class': OspHydraulicPortType, 'field': ['Pressure', 'VolumeFlowRate']},
     'LinearMechanicalQuasiPort': {
@@ -666,7 +692,10 @@ variable_group_types_with_variable_groups = {
     'AngularMechanicalQuasiPort': {
         'class': OspAngularMechanicalQuasiPortType, 'field': ['Torque', 'AngularDisplacement']
     },
-    'ElectromagneticQuasiPort': {'class': OspElectromagneticQuasiPortType, 'field': ['Voltage', 'Charge']},
+    'ElectromagneticQuasiPort': {
+        'class': OspElectromagneticQuasiPortType,
+        'field': ['Voltage', 'Charge']
+    },
     'HydraulicQuasiPort': {'class': OspHydraulicQuasiPortType, 'field': ['Pressure', 'Volume']},
 }
 
@@ -684,8 +713,12 @@ variable_group_types_with_variables = {
     'AngularDisplacement': {'class': OspAngularDisplacementType, 'field': ['Variable']},
     'Charge': {'class': OspChargeType, 'field': ['Variable']},
     'Volume': {'class': OspVolumeType, 'field': ['Variable']},
-    'LinearMechanicalPowerPort': {'class': OspLinearMechanicalPowerPortType, 'field': ['Variable']},
-    'AngularMechanicalPowerPort': {'class': OspAngularMechanicalPowerPortType, 'field': ['Variable']},
+    'LinearMechanicalPowerPort': {
+        'class': OspLinearMechanicalPowerPortType, 'field': ['Variable']
+    },
+    'AngularMechanicalPowerPort': {
+        'class': OspAngularMechanicalPowerPortType, 'field': ['Variable']
+    },
     'ElectromagneticPowerPort': {'class': OspElectromagneticPowerPortType, 'field': ['Variable']},
     'HydraulicPowerPort': {'class': OspHydraulicPowerPortType, 'field': ['Variable']},
 }
@@ -702,7 +735,8 @@ class OspVariableGroupsType(OspGenericType):
         for type_name, type_class in variable_group_types.items():
             if type_name in dict_xml:
                 self.__setattr__(
-                    type_name, [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
+                    type_name,
+                    [type_class['class'](dict_xml=variable) for variable in dict_xml[type_name]]
                 )
 
     def to_dict_xml(self):
@@ -719,7 +753,8 @@ class OspVariableGroupsType(OspGenericType):
         dict_xml_generic = super().to_dict()
         dict_xml_generic.pop("name")
         dict_xml = {
-            'Generic': None if self.Generic is None else [generic.to_dict() for generic in self.Generic]
+            'Generic': None if self.Generic is None
+            else [generic.to_dict() for generic in self.Generic]
         }
         dict_xml.update(dict_xml_generic)
         return dict_xml
@@ -748,8 +783,10 @@ class OspModelDescription(OspModelDescriptionAbstract):
         return {
             '@xmlns': self.xs.namespaces['osp'],
             '@version': self.version,
-            'UnitDefinitions': None if self.UnitDefinition is None else self.UnitDefinition.to_dict_xml(),
-            'VariableGroups': None if self.VariableGroups is None else self.VariableGroups.to_dict_xml(),
+            'UnitDefinitions': None if self.UnitDefinition is None
+            else self.UnitDefinition.to_dict_xml(),
+            'VariableGroups': None if self.VariableGroups is None
+            else self.VariableGroups.to_dict_xml(),
         }
 
     def from_xml_str(self, xml_source: str):
@@ -763,7 +800,8 @@ class OspModelDescription(OspModelDescriptionAbstract):
 
     def to_dict(self):
         return {
-            'UnitDefinitions': None if self.UnitDefinition is None else self.UnitDefinition.to_dict(),
+            'UnitDefinitions': None if self.UnitDefinition is None
+            else self.UnitDefinition.to_dict(),
             'VariableGroups': self.VariableGroups.to_dict(),
             'version': self.version
         }
@@ -798,13 +836,16 @@ class OspModelDescription(OspModelDescriptionAbstract):
 
     def add_interface(
             self, new_interface: Union[
-                OspVariableType, OspGenericType, OspForceType, OspTorqueType, OspVoltageType, OspPressureType,
-                OspLinearVelocityType, OspAngularVelocityType, OspCurrentType, OspVolumeFlowRateType,
-                OspLinearDisplacementType, OspAngularDisplacementType, OspChargeType, OspVolumeType,
-                OspLinearMechanicalPortType, OspAngularMechanicalPortType, OspElectromagneticPortType,
-                OspHydraulicPortType, OspLinearMechanicalQuasiPortType, OspAngularMechanicalQuasiPortType,
-                OspElectromagneticQuasiPortType, OspHydraulicQuasiPortType, OspLinearMechanicalPowerPortType,
-                OspAngularMechanicalPowerPortType, OspElectromagneticPowerPortType, OspHydraulicPowerPortType
+                OspVariableType, OspGenericType, OspForceType, OspTorqueType, OspVoltageType,
+                OspPressureType, OspLinearVelocityType, OspAngularVelocityType, OspCurrentType,
+                OspVolumeFlowRateType, OspLinearDisplacementType, OspAngularDisplacementType,
+                OspChargeType, OspVolumeType, OspLinearMechanicalPortType,
+                OspAngularMechanicalPortType, OspElectromagneticPortType,
+                OspHydraulicPortType, OspLinearMechanicalQuasiPortType,
+                OspAngularMechanicalQuasiPortType, OspElectromagneticQuasiPortType,
+                OspHydraulicQuasiPortType, OspLinearMechanicalPowerPortType,
+                OspAngularMechanicalPowerPortType, OspElectromagneticPowerPortType,
+                OspHydraulicPowerPortType
             ]
     ):
         type_name_new = find_type_of_variable_groups(new_interface)
@@ -821,13 +862,16 @@ class OspModelDescription(OspModelDescriptionAbstract):
 
     def update_interface(
             self, new_interface: Union[
-                OspVariableType, OspGenericType, OspForceType, OspTorqueType, OspVoltageType, OspPressureType,
-                OspLinearVelocityType, OspAngularVelocityType, OspCurrentType, OspVolumeFlowRateType,
-                OspLinearDisplacementType, OspAngularDisplacementType, OspChargeType, OspVolumeType,
-                OspLinearMechanicalPortType, OspAngularMechanicalPortType, OspElectromagneticPortType,
-                OspHydraulicPortType, OspLinearMechanicalQuasiPortType, OspAngularMechanicalQuasiPortType,
-                OspElectromagneticQuasiPortType, OspHydraulicQuasiPortType, OspLinearMechanicalPowerPortType,
-                OspAngularMechanicalPowerPortType, OspElectromagneticPowerPortType, OspHydraulicPowerPortType
+                OspVariableType, OspGenericType, OspForceType, OspTorqueType, OspVoltageType,
+                OspPressureType, OspLinearVelocityType, OspAngularVelocityType, OspCurrentType,
+                OspVolumeFlowRateType, OspLinearDisplacementType, OspAngularDisplacementType,
+                OspChargeType, OspVolumeType, OspLinearMechanicalPortType,
+                OspAngularMechanicalPortType, OspElectromagneticPortType,
+                OspHydraulicPortType, OspLinearMechanicalQuasiPortType,
+                OspAngularMechanicalQuasiPortType, OspElectromagneticQuasiPortType,
+                OspHydraulicQuasiPortType, OspLinearMechanicalPowerPortType,
+                OspAngularMechanicalPowerPortType, OspElectromagneticPowerPortType,
+                OspHydraulicPowerPortType
             ], old_name: str
     ):
         self.delete_interface(old_name)

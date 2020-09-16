@@ -2,7 +2,7 @@ import json
 import os
 import random
 import string
-from typing import Union
+from typing import Union, NamedTuple, List
 
 import pytest
 import xmlschema
@@ -12,13 +12,19 @@ from pyOSPParser.system_configuration import PATH_TO_XML_SCHEMA, Value, OspIniti
     OspVariableEndpoint, OspSignalEndpoint, OspVariableConnection, \
     OspSignalConnection, OspVariableGroupConnection, OspSignalGroupConnection, \
     OspConnections, OspLinearTransformationFunction, OspSumFunction, OspVectorSumFunction, \
-    OspFunctions, OspSystemStructure
+    OspFunctions, OspSystemStructure, FunctionType
 
 PATH_TO_TEST_SYSTEM_STRUCTURE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     'files',
     'OspSystemStructure_QT_for_parsing_testing.xml'
 )
+
+
+class EndpointPair(NamedTuple):
+    source: Union[OspVariableEndpoint, OspSignalEndpoint]
+    target: Union[OspVariableEndpoint, OspSignalEndpoint]
+    group: bool
 
 
 # noinspection PyPep8Naming
@@ -28,6 +34,43 @@ def assertEqual(a, b):
 
 def create_a_random_name(length: int):
     return ''.join(random.choices(string.ascii_lowercase, k=length))
+
+
+def create_a_random_pair_of_endpoints(simulators: List[OspSimulator], group: bool) -> EndpointPair:
+    [source_comp, target_comp] = random.sample(simulators, k=2)
+    return EndpointPair(
+        source=OspVariableEndpoint(simulator=source_comp.name, name=create_a_random_name(5)),
+        target=OspVariableEndpoint(simulator=target_comp.name, name=create_a_random_name(5)),
+        group=group
+    )
+
+
+def create_a_random_pair_of_endpoints_for_sig_conn(
+        simulators: List[OspSimulator],
+        functions: OspFunctions,
+        group: bool
+) -> EndpointPair:
+    """Returns a randomly created pair of endpoints for signal connection.
+
+    A signal connection has one end with a signal endpoint and the other with a variable endpoint.
+    In this function, it creates a signal enpoint point as a source or a target by 50% chance.
+    """
+    if random.random() > 0.5:
+        source_comp = random.choice(simulators)
+        target_function = random.choice(functions.get_function_names())
+        return EndpointPair(
+            source=OspVariableEndpoint(simulator=source_comp.name, name=create_a_random_name(5)),
+            target=OspSignalEndpoint(function=target_function, name=create_a_random_name(5)),
+            group=group
+        )
+    else:
+        target_comp = random.choice(simulators)
+        source_function = random.choice(functions.get_function_names())
+        return EndpointPair(
+            source=OspSignalEndpoint(function=source_function, name=create_a_random_name(5)),
+            target=OspVariableEndpoint(simulator=target_comp.name, name=create_a_random_name(5)),
+            group=group
+        )
 
 
 def test_value():
@@ -487,7 +530,7 @@ def test_osp_functions():
     assertEqual(dict_xml, obj.to_dict_xml())
 
 
-def test_osp_system_structure():
+def test_osp_system_structure_creation():
     # create from a dict_xml
     obj = OspSystemStructure(xml_source=PATH_TO_TEST_SYSTEM_STRUCTURE)
     dict_xml = obj.to_dict_xml()
@@ -498,3 +541,296 @@ def test_osp_system_structure():
     obj_ref.from_xml(xml_str)
     dict_xml_ref = obj_ref.to_dict_xml()
     assertEqual(dict_xml, dict_xml_ref)
+
+
+def test_adding_updating_deleting_a_initial_values():
+    # create from a dict_xml
+    obj = OspSystemStructure(xml_source=PATH_TO_TEST_SYSTEM_STRUCTURE)
+
+    # Test failure by adding with a wrong component name
+    init_value = OspInitialValue(variable='new_variable', value=10.0)
+    with pytest.raises(TypeError):
+        obj.add_update_initial_value(
+            component_name='This is not a correct name',
+            init_value=init_value
+        )
+
+    # Test adding a new variable
+    component: OspSimulator = random.choice(obj.Simulators)
+    if component.InitialValues:
+        num_init_values_before = len(component.InitialValues)
+    else:
+        num_init_values_before = 0
+    obj.add_update_initial_value(
+        component_name=component.name,
+        init_value=init_value
+    )
+    num_init_values_after = len(component.InitialValues)
+    new_init_value = next(
+        value for value in component.InitialValues if value.variable == init_value.variable
+    )
+    assert new_init_value.value == init_value.value
+    assert num_init_values_after == num_init_values_before + 1
+
+    # Test updating the variable
+    modified_init_value = OspInitialValue(variable=init_value.variable, value=random.random() * 10)
+    num_init_values_before = num_init_values_after
+    obj.add_update_initial_value(
+        component_name=component.name,
+        init_value=modified_init_value
+    )
+    num_init_values_after = len(component.InitialValues)
+    updated_initial_value = next(
+        value for value in component.InitialValues if value.variable == modified_init_value.variable
+    )
+    assert num_init_values_before == num_init_values_after
+    assert updated_initial_value.value == modified_init_value.value
+
+    # Test deleting the variable
+    num_init_values_before = num_init_values_after
+    obj.delete_initial_value(
+        component_name=component.name,
+        variable=modified_init_value.variable
+    )
+    if component.InitialValues:
+        num_init_values_after = len(component.InitialValues)
+        assert num_init_values_after == num_init_values_before - 1
+        with pytest.raises(StopIteration):
+            next(
+                value for value in component.InitialValues
+                if value.variable == modified_init_value.variable
+            )
+    else:
+        assert component.InitialValues is None
+
+
+def test_system_structure_adding_deleting_simulator():
+    # Test adding an component to an empty system
+    obj = OspSystemStructure()
+    new_component1 = OspSimulator(
+        name=create_a_random_name(5),
+        source=f'{create_a_random_name(7)}.fmu'
+    )
+    obj.add_simulator(new_component1)
+    assert len(obj.Simulators) == 1
+    assert obj.Simulators[0].name == new_component1.name
+
+    # Testing the same component (should cause an error)
+    with pytest.raises(TypeError):
+        obj.add_simulator(new_component1)
+
+    # Test adding another
+    new_component2 = OspSimulator(
+        name=create_a_random_name(5),
+        source=f'{create_a_random_name(7)}.fmu'
+    )
+    obj.add_simulator(new_component2)
+    assert len(obj.Simulators) == 2
+    assert obj.Simulators[-1].name == new_component2.name
+
+    # Test delete simulator
+    obj.delete_simulator(new_component1.name)
+    assert len(obj.Simulators) == 1
+    assert obj.Simulators[0].name == new_component2.name
+
+
+def test_system_structure_adding_deleting_connections():
+    # Create a system and add components
+    component_names = ['chassis', 'wheel', 'ground']
+    obj = OspSystemStructure()
+    for comp in component_names:
+        obj.add_simulator(OspSimulator(name=comp, source=f'{comp}.fmu'))
+
+    # Test adding a connection in which a component is not correctly referenced
+    endpoints = create_a_random_pair_of_endpoints(obj.Simulators, group=random.random() > 0.5)
+    endpoints.source.simulator = create_a_random_name(5)
+    with pytest.raises((AssertionError, TypeError)):
+        obj.add_connection(source=endpoints.source, target=endpoints.target, group=endpoints.group)
+
+    # Test adding a connection by providing source, target and group arguments
+    endpoints = create_a_random_pair_of_endpoints(obj.Simulators, group=False)
+    obj.add_connection(source=endpoints.source, target=endpoints.target, group=endpoints.group)
+    assert len(obj.Connections.VariableConnection) == 1
+
+    # Test adding a connection by providing connection directly
+    endpoints = create_a_random_pair_of_endpoints(obj.Simulators, group=False)
+    connection = OspVariableGroupConnection(
+        VariableGroup=[endpoints.source, endpoints.target]
+    )
+    obj.add_connection(connection)
+    assert len(obj.Connections.VariableGroupConnection) == 1
+
+    # Test adding a signal connection when there is no function
+    endpoints = create_a_random_pair_of_endpoints(obj.Simulators, False)
+    with pytest.raises((AssertionError, TypeError)):
+        obj.add_connection(
+            source=OspSignalEndpoint(function='a', name='b'),
+            target=endpoints.target,
+            group=False
+        )
+
+    # Test adding a signal connection
+    obj.add_function(
+            function_name='linear_transform',
+            function_type=FunctionType.LinearTransformation,
+            factor=1,
+            offset=0,
+    )
+    obj.add_function(
+        function_name='sum',
+        function_type=FunctionType.Sum,
+        inputCount=2,
+    )
+    obj.add_function(
+        function_name='vector_sum',
+        function_type=FunctionType.VectorSum,
+        inputCount=2,
+        dimension=3
+    )
+    endpoints = create_a_random_pair_of_endpoints_for_sig_conn(
+        simulators=obj.Simulators,
+        functions=obj.Functions,
+        group=False
+    )
+    obj.add_connection(source=endpoints.source, target=endpoints.target, group=False)
+    assert len(obj.Connections.SignalConnection) == 1
+
+    # Test adding a signal group connection
+    endpoints = create_a_random_pair_of_endpoints_for_sig_conn(
+        simulators=obj.Simulators,
+        functions=obj.Functions,
+        group=True
+    )
+    obj.add_connection(source=endpoints.source, target=endpoints.target, group=True)
+    assert len(obj.Connections.SignalGroupConnection) == 1
+
+    # Test deleting variable connection
+    connection = obj.Connections.VariableConnection[0]
+    connection_deleted = obj.delete_connection(
+        endpoint1=connection.Variable[0],
+        endpoint2=connection.Variable[1]
+    )
+    assert connection.to_dict_xml() == connection_deleted.to_dict_xml()
+    assert obj.Connections.VariableConnection is None
+
+    # Test deleting variable group connection
+    connection = obj.Connections.VariableGroupConnection[0]
+    connection_deleted = obj.delete_connection(
+        endpoint1=connection.VariableGroup[0],
+        endpoint2=connection.VariableGroup[1]
+    )
+    assert connection.to_dict_xml() == connection_deleted.to_dict_xml()
+    assert obj.Connections.VariableGroupConnection is None
+
+    # Test deleting signal connection
+    connection = obj.Connections.SignalConnection[0]
+    connection_deleted = obj.delete_connection(
+        endpoint1=connection.Signal,
+        endpoint2=connection.Variable
+    )
+    assert connection.to_dict_xml() == connection_deleted.to_dict_xml()
+    assert obj.Connections.SignalConnection is None
+
+    # Test deleting signal group connection
+    connection = obj.Connections.SignalGroupConnection[0]
+    connection_deleted = obj.delete_connection(
+        endpoint1=connection.SignalGroup,
+        endpoint2=connection.VariableGroup
+    )
+    assert connection.to_dict_xml() == connection_deleted.to_dict_xml()
+    assert obj.Connections is None
+
+
+def test_system_structure_adding_deleting_function():
+    obj = OspSystemStructure()
+    name = create_a_random_name(5)
+    func_type = FunctionType.LinearTransformation
+    factor = random.random()
+    offset = random.random()
+    # Test adding linear transform function lacking the required arguments
+    with pytest.raises(TypeError):
+        obj.add_function(
+            function_name=name,
+            function_type=func_type,
+        )
+    # Test adding the function properly
+    linear_transform_func = obj.add_function(
+        function_name=name,
+        function_type=func_type,
+        factor=factor,
+        offset=offset
+    )
+    assert len(obj.Functions.LinearTransformation) == 1
+    assert obj.Functions.LinearTransformation[0].to_dict_xml() == linear_transform_func.to_dict_xml()
+    assert name == linear_transform_func.name
+    assert factor == linear_transform_func.factor
+    assert offset == linear_transform_func.offset
+
+    # Test adding the function with the same name
+    with pytest.raises(TypeError):
+        obj.add_function(
+            function_name=name,
+            function_type=func_type,
+            factor=factor * 2,
+            offset=offset + 1,
+        )
+
+    # Test adding the sum function lacking required arguments
+    name = create_a_random_name(5)
+    func_type = FunctionType.Sum
+    input_count = random.randint(2, 5)
+    with pytest.raises(TypeError):
+        obj.add_function(
+            function_name=name,
+            function_type=func_type
+        )
+
+    # Test adding the sum function properly
+    sum_func = obj.add_function(
+        function_name=name,
+        function_type=func_type,
+        inputCount=input_count
+    )
+    assert len(obj.Functions.Sum) == 1
+    assert obj.Functions.Sum[0].to_dict_xml() == sum_func.to_dict_xml()
+    assert sum_func.name == name
+    assert sum_func.inputCount == input_count
+
+    # Test adding a vector sum function lacking arguments
+    name = create_a_random_name(8)
+    func_type = FunctionType.VectorSum
+    input_count = random.randint(2, 5)
+    dimension = random.randint(2, 5)
+    with pytest.raises(TypeError):
+        obj.add_function(
+            function_name=name,
+            function_type=func_type,
+        )
+
+    # Test adding the vector sum function properly
+    vector_sum_func = obj.add_function(
+        function_name=name,
+        function_type=func_type,
+        inputCount=input_count,
+        dimension=dimension
+    )
+    assert len(obj.Functions.VectorSum) == 1
+    assert obj.Functions.VectorSum[0].to_dict_xml() == vector_sum_func.to_dict_xml()
+    assert name == vector_sum_func.name
+    assert input_count == vector_sum_func.inputCount
+    assert dimension == vector_sum_func.dimension
+
+    # Test deleting with a wrong name
+    assert not obj.delete_function(function_name=create_a_random_name(5))
+
+    # Test deleting the vector sum function
+    obj.delete_function(function_name=vector_sum_func.name)
+    assert obj.Functions.VectorSum is None
+
+    # Test deleting the sum function
+    obj.delete_function(function_name=sum_func.name)
+    assert obj.Functions.Sum is None
+
+    # Test deleting the linear transformation function
+    obj.delete_function(function_name=linear_transform_func.name)
+    assert obj.Functions is None

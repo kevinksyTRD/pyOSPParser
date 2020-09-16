@@ -6,7 +6,7 @@ with open("README.md", "r") as readme_file:
 
 setup(
     name="pyOSPParser",
-    version="0.2.0",
+    version="0.3.0",
     url="https://github.com/kevinksyTRD/pyOSPParser",
     description="A module to parse or deploy XML/JSON files for Open Simulation Platform.",
     long_description_content_type="text/markdown",
