@@ -826,6 +826,6 @@ def test_system_structure_adding_deleting_function():
     obj.delete_function(function_name=sum_func.name)
     assert obj.Functions.Sum is None
 
-    # Test deleeting the linear transformation function
+    # Test deleting the linear transformation function
     obj.delete_function(function_name=linear_transform_func.name)
     assert obj.Functions is None
