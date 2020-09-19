@@ -127,6 +127,23 @@ class OspInteger(Value):
     """
     value: int
     name = 'Integer'
+    _required_keys = ['value']
+
+    def __init__(self, dict_xml: Dict = None, **kwargs):
+        """Contructor for OspInteger
+
+        One should provide either 'dict_xml(dictionary)' that has a key of
+        '@value') or 'value' (integer) as a argument.
+
+        Args:
+            dict_xml(optional) {'@value': bool}
+            value(integer, optional): actual value
+        """
+        super().__init__(dict_xml=dict_xml, **kwargs)
+        value = kwargs.get('value', None)
+        if value is not None:
+            if type(value) is not int:
+                raise TypeError('The value should be of integer type.')
 
 
 class OspBoolean(Value):
@@ -136,6 +153,23 @@ class OspBoolean(Value):
     """
     value: bool
     name = 'Boolean'
+    _required_keys = ['value']
+
+    def __init__(self, dict_xml: Dict = None, **kwargs):
+        """Contructor for OspBoolean
+
+        One should provide either 'dict_xml(dictionary)' that has a key of
+        '@value') or 'value' (bool) as a argument.
+
+        Args:
+            dict_xml(optional) {'@value': bool}
+            value(bool, optional): actual value
+        """
+        super().__init__(dict_xml=dict_xml, **kwargs)
+        value = kwargs.get('value', None)
+        if value is not None:
+            if type(value) is not bool:
+                raise TypeError('The value should be of boolean type.')
 
 
 class OspString(Value):
@@ -145,15 +179,49 @@ class OspString(Value):
     """
     value: str
     name = 'String'
+    _required_keys = ['value']
+
+    def __init__(self, dict_xml: Dict = None, **kwargs):
+        """Contructor for OspString
+
+        One should provide either 'dict_xml(dictionary)' that has a key of
+        '@value') or 'value' (string) as a argument.
+
+        Args:
+            dict_xml {'@value': string}
+        """
+        super().__init__(dict_xml=dict_xml, **kwargs)
+        value = kwargs.get('value', None)
+        if value is not None:
+            if type(value) is not str:
+                raise TypeError('The value should be of string type.')
 
 
 class OspReal(Value):
     """
     The "name" member is used in other application. Please make sure that
-    the value is not changed without cross-checking
+    the value is not changed without cross-checking. One should provide 'value' argument
+    with initilaization.
     """
     value: float
     name = 'Real'
+    _required_keys = ['value']
+
+    def __init__(self, dict_xml=None, **kwargs):
+        """Contructor for OspReal
+
+        One should provide either 'dict_xml(dictionary)' that has a key of
+        '@value') or 'value' (float) as a argument.
+
+        Args:
+            dict_xml(optional) {'@value': float}
+            value(float, optional) Actual value
+        """
+        super().__init__(dict_xml=dict_xml, **kwargs)
+        value = kwargs.get('value', None)
+        if value is not None:
+            if type(value) is not float:
+                raise TypeError('The value should be of float type.')
 
 
 class OspInitialValue(OspSystemStructureAbstract):
@@ -166,15 +234,26 @@ class OspInitialValue(OspSystemStructureAbstract):
         Constructor for OspInitialValue.
 
         One should provide either 'dict_xml(dictionary)' that has a key of
-        'variable' and 'value) or 'variable (str)' and 'value (float, int, str, bool)' as
-        arguments.
+        'variable' and 'value) or 'variable (str)' and
+        'value (OspReal, OspInteger, OspString, OspBoolean)' as arguments.
 
         Args:
             variable 
             value
             dict_xml
+
+        Exceptions:
+            TypeError if the required arguments are not given
+                (either dict_xml or variable and value)
+            TypeError if you provide a wrong type for the value argument. It should be either
+                OspReal, OspInteger, OspString or OspBoolean
+
         """
         super().__init__(dict_xml=dict_xml, **kwargs)
+        if kwargs.get('value', None) is not None:
+            if type(kwargs.get('value', None)) not in [OspReal, OspInteger, OspString, OspBoolean]:
+                raise TypeError('The value should be of either OspReal, '
+                                'OspInteger, OspString or OspBoolean type')
 
     def to_dict_xml(self):
         return {

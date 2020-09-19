@@ -727,6 +727,7 @@ variable_group_types_with_variables = {
 class OspVariableGroupsType(OspGenericType):
     name = None
     Generic: List[OspGenericType] = None
+    _required_keys = []
 
     def __init__(self, dict_xml: Dict = None, **kwargs):
         super().__init__(dict_xml=dict_xml, **kwargs)
@@ -883,9 +884,10 @@ class OspModelDescription(OspModelDescriptionAbstract):
     ):
         interface_index = self.find_interface_by_name(interface_name)
         var_groups = self.VariableGroups.__getattribute__(interface_index.type_name)
-        var_groups.pop(interface_index.index)
+        deleted_var_group = var_groups.pop(interface_index.index)
         var_groups = None if len(var_groups) == 0 else var_groups
         self.VariableGroups.__setattr__(interface_index.type_name, var_groups)
+        return deleted_var_group
 
     def get_variables(self):
         osp_variables = []

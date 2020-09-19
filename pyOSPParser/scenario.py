@@ -15,6 +15,7 @@ Functions:
 import json
 import string
 from enum import Enum
+from typing import List, Union
 
 
 def format_filename(name: str) -> str:
@@ -77,6 +78,18 @@ class OSPEvent:
         self.action = action
         self.value = value
 
+    @property
+    def action(self):
+        return self._action
+
+    @action.setter
+    def action(self, value):
+        if value in [self.OVERRIDE, self.BIAS, self.RESET]:
+            self._action = value
+        else:
+            raise TypeError('The action should be either "OSPEvent.OVERRIDE", '
+                            '"OSPEvent.BIAS" or "OSPEvent.RESET"')
+
     def to_dict(self):
         return {
             'time': self.time, 'model': self.model,
@@ -86,7 +99,7 @@ class OSPEvent:
 
 
 class OSPScenario:
-    events = []
+    events: List[OSPEvent]
 
     def __init__(self, name: str, end: float, description: str = ''):
         """Initialization of OSPScenario object
@@ -99,11 +112,76 @@ class OSPScenario:
         self.name = name
         self.end = end
         self.description = description
+        self.events = []
 
-    def add_event(self, event: OSPEvent):
+    def add_event(self, event: OSPEvent) -> OSPEvent:
+        """Add an event
+
+        Excetions:
+            TypeError if the event is not OSPEvent instance
+            TypeError if there is already an event that matches time, component and variable
+            TypeError if the event time is out of range
+        """
+
         if type(event) is not OSPEvent:
             raise TypeError("The event should be an instance of OSPEvent class")
+        if len(self.find_event(
+                time=event.time, component=event.model, variable=event.variable
+        )) > 0:
+            raise TypeError("There is already an event that matches time, component and variable")
+        if event.time > self.end or event.time < 0:
+            raise TypeError(f"Event time should be greater than 0 and less "
+                            f"than the scenario end time {self.end}")
         self.events.append(event)
+
+        return event
+
+    def update_event(
+            self,
+            time: float,
+            component: str,
+            variable: str,
+            action: int = None,
+            value: str = None
+    ) -> OSPEvent:
+        """Updates an event that matches the arguments given
+
+        One can update action or value or both. If no value is given, then no change is done.
+
+        Exceptions:
+             TypeError if no event is found for the keys given or there are multiple events found.
+        """
+        event = self.find_event(time=time, component=component, variable=variable)
+        if len(event) == 1:
+            if action:
+                event[0].action = action
+            if value:
+                event[0].value = value
+            return event[0]
+        else:
+            TypeError('No event is found or there are multiple events found')
+
+    def delete_events(self, time: float = None, component: str = None, variable: str = None) -> \
+            List[OSPEvent]:
+        """Delete events
+
+         If no argument is provided, it deletes all events. Givent the arguments, events
+         that match the argument values are found and deleted.
+         """
+        events = self.find_event(time=time, component=component, variable=variable)
+        return [self.events.pop(self.events.index(event)) for event in events]
+
+    def find_event(self, time: float = None, component: str = None, variable: str = None) \
+            -> List[OSPEvent]:
+        """Find events that matches the given keys"""
+        events_found = filter(lambda x: x, self.events)
+        if time is not None:
+            events_found = filter(lambda x: x.time == time, self.events)
+        if component is not None:
+            events_found = filter(lambda x: x.model == component, events_found)
+        if variable is not None:
+            events_found = filter(lambda x: x.variable == variable, events_found)
+        return list(events_found)
 
     def to_dict(self):
         return {
