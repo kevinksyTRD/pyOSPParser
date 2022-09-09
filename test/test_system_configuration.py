@@ -73,6 +73,20 @@ def create_a_random_pair_of_endpoints_for_sig_conn(
         )
 
 
+def create_a_random_osp_variable_type() -> Union[OspReal, OspString, OspInteger, OspBoolean]:
+    """Create a random OspVariable such as OspReal, OspString, OspInteger, OspBoolean"""
+    variable_klass = random.choice(list(OSP_VARIABLE_CLASS.values()))
+    if variable_klass == OspReal:
+        value = random.random()
+    elif variable_klass == OspString:
+        value = create_a_random_name(5)
+    elif variable_klass == OspInteger:
+        value = random.randint(1, 10)
+    elif variable_klass == OspBoolean:
+        value = random.random() > 0.5
+    return variable_klass(value=value)
+
+
 def test_value():
     """Test Value class"""
     #: Test initialization
@@ -92,10 +106,7 @@ def test_osp_initial_value():
     # Test creating the object without any arguments
     with pytest.raises(TypeError):
         OspInitialValue()
-
-    variable_klass = random.choice(list(OSP_VARIABLE_CLASS.values()))
-    variable_obj: Union[OspReal, OspString, OspInteger, OspBoolean] = \
-        variable_klass(value=random.random())
+    variable_obj = create_a_random_osp_variable_type()
     variable = create_a_random_name(5)
     obj = OspInitialValue(variable=variable, value=variable_obj)
     assert obj.variable == variable
@@ -119,9 +130,7 @@ def test_osp_simulator():
     number_initial_values = random.randint(1, 10)
     initial_values = []
     for _ in range(number_initial_values):
-        variable_klass = random.choice(list(OSP_VARIABLE_CLASS.values()))
-        variable_obj: Union[OspReal, OspString, OspInteger, OspBoolean] = \
-            variable_klass(value=random.random())
+        variable_obj = create_a_random_osp_variable_type()
         initial_values.append(
             OspInitialValue(variable=create_a_random_name(5), value=variable_obj)
         )
@@ -548,7 +557,7 @@ def test_adding_updating_deleting_a_initial_values():
     obj = OspSystemStructure(xml_source=PATH_TO_TEST_SYSTEM_STRUCTURE)
 
     # Test failure by adding with a wrong component name
-    init_value = OspInitialValue(variable='new_variable', value=10.0)
+    init_value = OspInitialValue(variable='new_variable', value=OspReal(value=10.0))
     with pytest.raises(TypeError):
         obj.add_update_initial_value(
             component_name='This is not a correct name',
@@ -573,7 +582,10 @@ def test_adding_updating_deleting_a_initial_values():
     assert num_init_values_after == num_init_values_before + 1
 
     # Test updating the variable
-    modified_init_value = OspInitialValue(variable=init_value.variable, value=random.random() * 10)
+    modified_init_value = OspInitialValue(
+        variable=init_value.variable,
+        value=OspReal(value=random.random() * 10)
+    )
     num_init_values_before = num_init_values_after
     obj.add_update_initial_value(
         component_name=component.name,

@@ -86,7 +86,7 @@ class OspSimulatorForLogging(OspLoggingConfigurationAbstract):
     """Class for a simulator instance for logging configuration"""
     name: str
     decimation_factor: int = None
-    variables: List[OspVariableForLogging] = []
+    variables: List[OspVariableForLogging]
     _required_keys = ['name']
 
     def __init__(self, dict_xml: Union[Dict, None] = None, **kwargs):
@@ -105,7 +105,16 @@ class OspSimulatorForLogging(OspLoggingConfigurationAbstract):
             dict_xml(Dict): A dictionary that contains the information of the
 
         """
+        self.variables = []
         super(OspSimulatorForLogging, self).__init__(dict_xml, **kwargs)
+        variables = kwargs.get('variables', None)
+        if variables is not None:
+            if type(variables) is not list:
+                raise TypeError('Variables should be a list of OspVariableForLogging instances')
+            for variable in variables:
+                if type(variable) is not OspVariableForLogging:
+                    raise TypeError('Variables should be a list of OspVariableForLogging instances.')
+            self.variables = variables
         if self.decimation_factor is None:
             self.decimation_factor = 1
 
@@ -123,17 +132,17 @@ class OspSimulatorForLogging(OspLoggingConfigurationAbstract):
         self.decimation_factor = dict_xml.get('@decimationFactor', 1)
         self.variables = [OspVariableForLogging(dict_xml=variable) for variable in dict_xml.get('variable', [])]
 
-    def add_variable(self, variable: OspVariableForLogging):
+    def add_variable(self, variable: str):
         """Add a variable
 
         Args:
-            variable(OspVariableForLogging): An OspVariableForLogging instance to add.
+            variable: Name of a variable to add.
         """
-        self.variables.append(variable)
+        self.variables.append(OspVariableForLogging(name=variable))
 
 
 class OspLoggingConfiguration(OspLoggingConfigurationAbstract):
-    simulators: Union[List[OspSimulatorForLogging], None] = []
+    simulators: Union[List[OspSimulatorForLogging], None] = None
     _required_keys = []
 
     def __init__(self, dict_xml: Dict = None, xml_source: str = None, **kwargs):
@@ -193,3 +202,13 @@ class OspLoggingConfiguration(OspLoggingConfigurationAbstract):
             self.from_dict_xml(xml_dict)
         else:
             xs.validate(xml_str)
+
+    def set_decimation_factor(self, component_name: str, decimation_factor: int):
+        """Sets a value for decimation factor for a component"""
+        try:
+            simulator = next(
+                simulator for simulator in self.simulators if simulator.name == component_name
+            )
+        except StopIteration:
+            NameError(f'No configuration is found for the component {component_name}')
+        simulator.decimation_factor = int(decimation_factor)
