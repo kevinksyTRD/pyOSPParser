@@ -142,8 +142,11 @@ class OspInteger(Value):
         super().__init__(dict_xml=dict_xml, **kwargs)
         value = kwargs.get('value', None)
         if value is not None:
-            if type(value) is not int:
-                raise TypeError('The value should be of integer type.')
+            if not isinstance(value, int):
+                if isinstance(value, float):
+                    self.value = int(value)
+                else:
+                    raise TypeError('The value should be of integer type.')
 
 
 class OspBoolean(Value):
@@ -168,7 +171,7 @@ class OspBoolean(Value):
         super().__init__(dict_xml=dict_xml, **kwargs)
         value = kwargs.get('value', None)
         if value is not None:
-            if type(value) is not bool:
+            if not isinstance(value, bool):
                 raise TypeError('The value should be of boolean type.')
 
 
@@ -193,7 +196,7 @@ class OspString(Value):
         super().__init__(dict_xml=dict_xml, **kwargs)
         value = kwargs.get('value', None)
         if value is not None:
-            if type(value) is not str:
+            if not isinstance(value, str):
                 raise TypeError('The value should be of string type.')
 
 
@@ -220,8 +223,12 @@ class OspReal(Value):
         super().__init__(dict_xml=dict_xml, **kwargs)
         value = kwargs.get('value', None)
         if value is not None:
-            if type(value) is not float:
-                raise TypeError('The value should be of float type.')
+            if not isinstance(value, float):
+                if isinstance(value, int):
+                    self.value = float(value)
+                else:
+                    raise TypeError('The value should be of float type.')
+            
 
 
 class OspInitialValue(OspSystemStructureAbstract):
