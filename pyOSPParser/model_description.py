@@ -764,7 +764,7 @@ class OspVariableGroupsType(OspGenericType):
 class OspModelDescription(OspModelDescriptionAbstract):
     VariableGroups: OspVariableGroupsType
     UnitDefinition: OspUnitDefinitionsType = None
-    version: str = '0.1'
+    version: str = '1.0'
     _required_keys = ['VariableGroups']
 
     def __init__(self, dict_xml: Dict = None, xml_source: str = None, **kwargs):
