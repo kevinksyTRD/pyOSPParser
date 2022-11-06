@@ -91,10 +91,14 @@ class OSPEvent:
                             '"OSPEvent.BIAS" or "OSPEvent.RESET"')
 
     def to_dict(self):
+        if isinstance(self.value, bool) or isinstance(self.value, str):
+            value = self.value
+        else:
+            value = int(self.value) if int(self.value) == self.value else self.value
         return {
             'time': self.time, 'model': self.model,
             'variable': self.variable, 'action': EventAction(self.action).name,
-            'value': int(self.value) if int(self.value) == self.value else self.value
+            'value': value
         }
 
 
