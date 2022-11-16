@@ -1019,6 +1019,24 @@ class OspFunctions(OspSystemStructureAbstract):
                 self.VectorSum = [function]
             return function
 
+    def get_function_by_name(self, name: str) -> Union[OspLinearTransformationFunction,
+                                                       OspSumFunction, OspVectorSumFunction,
+                                                       None]:
+        """Return a function by name or None if not found."""
+        if self.LinearTransformation is not None:
+            for function in self.LinearTransformation:
+                if function.name == name:
+                    return function
+        if self.Sum is not None:
+            for function in self.Sum:
+                if function.name == name:
+                    return function
+        if self.VectorSum is not None:
+            for function in self.VectorSum:
+                if function.name == name:
+                    return function
+        raise TypeError('Function not found.')
+
     @staticmethod
     def find_function(name: str, functions: List[Union[
         OspLinearTransformationFunction,
@@ -1425,6 +1443,14 @@ class OspSystemStructure(OspSystemStructureAbstract):
             if function_was_none:
                 self.Functions = None
             raise TypeError(e.__str__())
+
+    def get_function_by_name(self, name: str) -> Union[
+        OspLinearTransformationFunction,
+        OspSumFunction,
+        OspVectorSumFunction
+    ]:
+        """Returns a function if it is found with the name given. Unless, a TypeError is raised."""
+        return self.Functions.get_function_by_name(name)
 
     def delete_function(self, function_name: str):
         """Delete a function

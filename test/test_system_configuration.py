@@ -773,7 +773,10 @@ def test_system_structure_adding_deleting_function():
         offset=offset
     )
     assert len(obj.Functions.LinearTransformation) == 1
-    assert obj.Functions.LinearTransformation[0].to_dict_xml() == linear_transform_func.to_dict_xml()
+    with pytest.raises(TypeError):
+        obj.get_function_by_name(name + ".")
+    assert obj.get_function_by_name(name).name == name
+    assert obj.get_function_by_name(name).to_dict_xml() == linear_transform_func.to_dict_xml()
     assert name == linear_transform_func.name
     assert factor == linear_transform_func.factor
     assert offset == linear_transform_func.offset
