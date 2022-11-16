@@ -861,8 +861,8 @@ class OspSumFunction(OspSystemStructureAbstract):
 
 class OspVectorSumFunction(OspSystemStructureAbstract):
     name: str
-    inputCount = int
-    dimension = int
+    inputCount: int
+    dimension: int
     _required_keys = ['name', 'inputCount', 'dimension']
 
     def __init__(self, dict_xml: Union[Dict, None] = None, **kwargs):
