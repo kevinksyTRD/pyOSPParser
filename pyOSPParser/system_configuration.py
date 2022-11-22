@@ -277,6 +277,19 @@ class OspInitialValue(OspSystemStructureAbstract):
                 )
                 break
 
+    @property
+    def type_var(self):
+        if isinstance(self.value, OspReal):
+            return VariableType.Real
+        elif isinstance(self.value, OspInteger):
+            return VariableType.Integer
+        elif isinstance(self.value, OspBoolean):
+            return VariableType.Boolean
+        elif isinstance(self.value, OspString):
+            return VariableType.String
+        else:
+            raise TypeError('The type of the value is not supported.')
+
 
 class OspSimulator(OspSystemStructureAbstract):
     name: str
